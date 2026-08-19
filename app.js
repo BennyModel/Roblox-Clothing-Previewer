@@ -19,6 +19,7 @@ let avatar;
 let shirtMeshes = [];
 let pantsMeshes = [];
 let neutralMeshes = [];
+let floorShadow;
 let shirtTexture = null;
 let pantsTexture = null;
 let shirtObjectUrl = null;
@@ -36,8 +37,8 @@ function setStatus(text, hidden = false) {
 function createScene() {
   scene = new THREE.Scene();
 
-  camera = new THREE.PerspectiveCamera(38, viewer.clientWidth / viewer.clientHeight, 0.1, 100);
-  camera.position.set(0, 1.45, 4.2);
+  camera = new THREE.PerspectiveCamera(34, viewer.clientWidth / viewer.clientHeight, 0.1, 100);
+  camera.position.set(0, 1.65, 5.2);
 
   renderer = new THREE.WebGLRenderer({
     antialias: true,
@@ -54,11 +55,11 @@ function createScene() {
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.enablePan = false;
-  controls.minDistance = 2.4;
-  controls.maxDistance = 5.5;
+  controls.minDistance = 3.2;
+  controls.maxDistance = 6.4;
   controls.minPolarAngle = Math.PI * 0.22;
   controls.maxPolarAngle = Math.PI * 0.74;
-  controls.target.set(0, 1.05, 0);
+  controls.target.set(0, 1.45, 0);
 
   scene.add(new THREE.HemisphereLight(0xf9f4df, 0x31462f, 2.1));
 
@@ -70,13 +71,19 @@ function createScene() {
   rim.position.set(-4, 3, -2);
   scene.add(rim);
 
-  const floor = new THREE.Mesh(
-    new THREE.CircleGeometry(1.55, 72),
-    new THREE.ShadowMaterial({ opacity: 0.18 })
+  floorShadow = new THREE.Mesh(
+    new THREE.CircleGeometry(0.95, 72),
+    new THREE.MeshBasicMaterial({
+      color: 0x263225,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+    })
   );
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.y = -0.08;
-  scene.add(floor);
+  floorShadow.rotation.x = -Math.PI / 2;
+  floorShadow.scale.set(1.35, 0.42, 1);
+  floorShadow.position.set(0, -0.015, 0.08);
+  scene.add(floorShadow);
 
   loadAvatar();
   animate();
@@ -90,8 +97,6 @@ function loadAvatar() {
     (gltf) => {
       avatar = gltf.scene;
       avatar.name = "roblox-model-blocky";
-      avatar.position.set(0, -0.1, 0);
-      avatar.scale.setScalar(1.05);
 
       shirtMeshes = [];
       pantsMeshes = [];
@@ -103,6 +108,8 @@ function loadAvatar() {
         object.castShadow = false;
         object.receiveShadow = false;
         object.material = object.material.clone();
+        object.material.map = null;
+        object.material.color.set(0xffffff);
         object.material.roughness = 0.76;
         object.material.metalness = 0;
         object.material.side = THREE.FrontSide;
@@ -117,6 +124,7 @@ function loadAvatar() {
         }
       });
 
+      fitAvatarToStage();
       scene.add(avatar);
       applyTextures();
       setStatus("", true);
@@ -137,9 +145,9 @@ function createAvatar() {
   pantsMeshes = [];
   neutralMeshes = [];
 
-  const skin = createMaterial(0xe8e5d7);
-  const shirt = createMaterial(0xf0ead6);
-  const pants = createMaterial(0x8f9f84);
+  const skin = createMaterial(0xffffff);
+  const shirt = createMaterial(0xffffff);
+  const pants = createMaterial(0xffffff);
 
   addPart("Head", [0.86, 0.64, 0.86], [0, 2.72, 0], skin, neutralMeshes);
   addPart("Torso", [1.52, 1.42, 0.68], [0, 1.78, 0], shirt, shirtMeshes);
@@ -152,6 +160,19 @@ function createAvatar() {
   avatar.position.y = 0.12;
   scene.add(avatar);
   setStatus("", true);
+}
+
+function fitAvatarToStage() {
+  const box = new THREE.Box3().setFromObject(avatar);
+  const size = new THREE.Vector3();
+  const center = new THREE.Vector3();
+  box.getSize(size);
+  box.getCenter(center);
+
+  const desiredHeight = 3.25;
+  const scale = desiredHeight / Math.max(size.y, 0.001);
+  avatar.scale.setScalar(scale);
+  avatar.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
 }
 
 function createMaterial(color) {
@@ -226,9 +247,9 @@ function loadTexture(file, type) {
 function applyTextures() {
   if (!avatar) return;
 
-  shirtMeshes.forEach((mesh) => setMeshTexture(mesh, shirtTexture, 0xf0ead6));
-  pantsMeshes.forEach((mesh) => setMeshTexture(mesh, pantsTexture, 0x8f9f84));
-  neutralMeshes.forEach((mesh) => setMeshTexture(mesh, null, 0xe8e5d7));
+  shirtMeshes.forEach((mesh) => setMeshTexture(mesh, shirtTexture, 0xffffff));
+  pantsMeshes.forEach((mesh) => setMeshTexture(mesh, pantsTexture, 0xffffff));
+  neutralMeshes.forEach((mesh) => setMeshTexture(mesh, null, 0xffffff));
 }
 
 function setMeshTexture(mesh, texture, fallbackColor) {
@@ -257,8 +278,8 @@ function clearTextures() {
 
 function resetView() {
   controls.reset();
-  camera.position.set(0, 1.45, 4.2);
-  controls.target.set(0, 1.05, 0);
+  camera.position.set(0, 1.65, 5.2);
+  controls.target.set(0, 1.45, 0);
   controls.update();
 }
 
