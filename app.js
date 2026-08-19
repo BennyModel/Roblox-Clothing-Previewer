@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const viewer = document.querySelector("#viewer");
 const statusEl = document.querySelector("#viewerStatus");
@@ -24,6 +25,8 @@ let shirtObjectUrl = null;
 let pantsObjectUrl = null;
 
 const textureLoader = new THREE.TextureLoader();
+const modelLoader = new GLTFLoader();
+const modelUrl = new URL("./assets/models/roblox_model_blocky.glb", import.meta.url).href;
 
 function setStatus(text, hidden = false) {
   statusEl.textContent = text;
@@ -75,8 +78,56 @@ function createScene() {
   floor.position.y = -0.08;
   scene.add(floor);
 
-  createAvatar();
+  loadAvatar();
   animate();
+}
+
+function loadAvatar() {
+  setStatus("Loading blocky model");
+
+  modelLoader.load(
+    modelUrl,
+    (gltf) => {
+      avatar = gltf.scene;
+      avatar.name = "roblox-model-blocky";
+      avatar.position.set(0, -0.1, 0);
+      avatar.scale.setScalar(1.05);
+
+      shirtMeshes = [];
+      pantsMeshes = [];
+      neutralMeshes = [];
+
+      avatar.traverse((object) => {
+        if (!object.isMesh) return;
+
+        object.castShadow = false;
+        object.receiveShadow = false;
+        object.material = object.material.clone();
+        object.material.roughness = 0.76;
+        object.material.metalness = 0;
+        object.material.side = THREE.FrontSide;
+
+        const name = `${object.name} ${object.material.name}`.toLowerCase();
+        if (name.includes("top") || name.includes("torso")) {
+          shirtMeshes.push(object);
+        } else if (name.includes("bot") || name.includes("leg")) {
+          pantsMeshes.push(object);
+        } else {
+          neutralMeshes.push(object);
+        }
+      });
+
+      scene.add(avatar);
+      applyTextures();
+      setStatus("", true);
+    },
+    undefined,
+    (error) => {
+      console.error(error);
+      setStatus("Model fallback");
+      createAvatar();
+    }
+  );
 }
 
 function createAvatar() {
