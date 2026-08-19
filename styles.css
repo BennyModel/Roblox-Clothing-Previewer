@@ -49,8 +49,9 @@ body {
   overflow: hidden;
   background-color: #789073;
   background-image: var(--stage-bg);
-  background-size: cover;
-  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: 52% auto;
+  background-position: center bottom 86px;
   box-shadow: 0 38px 80px rgba(20, 34, 24, 0.28);
 }
 
@@ -117,7 +118,7 @@ body {
 @media (max-width: 900px) {
   .stage { padding: 18px 12px 24px; }
   .topbar { height: 38px; }
-  .hero { min-height: 820px; background-position: 55% center; }
+  .hero { min-height: 820px; background-size: 82% auto; background-position: center 72px; }
   .upload-panel { left: 50%; top: 500px; width: min(94vw, 360px); transform: translateX(-50%); }
   .viewer-card { left: 50%; top: 70px; width: min(92vw, 410px); height: 450px; transform: translateX(-50%); }
 }
@@ -125,7 +126,7 @@ body {
 @media (max-width: 560px) {
   .brand span:last-child, .nav-line { display: none; }
   .topbar { justify-content: space-between; }
-  .hero { min-height: 850px; }
+  .hero { min-height: 850px; background-size: 110% auto; background-position: center 70px; }
   .viewer-card { top: 76px; height: 410px; }
   .upload-panel { top: 530px; }
   .panel-heading h1 { font-size: 29px; }
