@@ -37,8 +37,8 @@ function setStatus(text, hidden = false) {
 function createScene() {
   scene = new THREE.Scene();
 
-  camera = new THREE.PerspectiveCamera(34, viewer.clientWidth / viewer.clientHeight, 0.1, 100);
-  camera.position.set(0, 1.65, 5.2);
+  camera = new THREE.PerspectiveCamera(32, viewer.clientWidth / viewer.clientHeight, 0.1, 100);
+  camera.position.set(0, 1.35, 6.15);
 
   renderer = new THREE.WebGLRenderer({
     antialias: true,
@@ -49,40 +49,40 @@ function createScene() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.1;
   viewer.appendChild(renderer.domElement);
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.enablePan = false;
-  controls.minDistance = 3.2;
-  controls.maxDistance = 6.4;
+  controls.minDistance = 4.4;
+  controls.maxDistance = 7.4;
   controls.minPolarAngle = Math.PI * 0.22;
   controls.maxPolarAngle = Math.PI * 0.74;
-  controls.target.set(0, 1.45, 0);
+  controls.target.set(0, 1.22, 0);
 
-  scene.add(new THREE.HemisphereLight(0xf9f4df, 0x31462f, 2.1));
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x7d9078, 2.25));
 
-  const key = new THREE.DirectionalLight(0xffffff, 2.4);
+  const key = new THREE.DirectionalLight(0xffffff, 2.6);
   key.position.set(3, 5, 4);
   scene.add(key);
 
-  const rim = new THREE.DirectionalLight(0xd7ffd8, 1.1);
+  const rim = new THREE.DirectionalLight(0xd7ffd8, 0.9);
   rim.position.set(-4, 3, -2);
   scene.add(rim);
 
   floorShadow = new THREE.Mesh(
-    new THREE.CircleGeometry(0.95, 72),
+    new THREE.CircleGeometry(1, 72),
     new THREE.MeshBasicMaterial({
       color: 0x263225,
       transparent: true,
-      opacity: 0.18,
+      opacity: 0.2,
       depthWrite: false,
     })
   );
   floorShadow.rotation.x = -Math.PI / 2;
-  floorShadow.scale.set(1.35, 0.42, 1);
-  floorShadow.position.set(0, -0.015, 0.08);
+  floorShadow.scale.set(1.45, 0.44, 1);
+  floorShadow.position.set(0, 0.012, 0.1);
   scene.add(floorShadow);
 
   loadAvatar();
@@ -110,7 +110,8 @@ function loadAvatar() {
         object.material = object.material.clone();
         object.material.map = null;
         object.material.color.set(0xffffff);
-        object.material.roughness = 0.76;
+        object.material.emissive?.set(0x000000);
+        object.material.roughness = 0.74;
         object.material.metalness = 0;
         object.material.side = THREE.FrontSide;
 
@@ -156,8 +157,8 @@ function createAvatar() {
   addPart("Left Leg", [0.58, 1.2, 0.62], [-0.36, 0.48, 0], pants, pantsMeshes);
   addPart("Right Leg", [0.58, 1.2, 0.62], [0.36, 0.48, 0], pants, pantsMeshes);
 
-  avatar.scale.setScalar(0.86);
-  avatar.position.y = 0.12;
+  avatar.scale.setScalar(0.66);
+  avatar.position.y = 0.02;
   scene.add(avatar);
   setStatus("", true);
 }
@@ -169,7 +170,7 @@ function fitAvatarToStage() {
   box.getSize(size);
   box.getCenter(center);
 
-  const desiredHeight = 3.25;
+  const desiredHeight = 2.55;
   const scale = desiredHeight / Math.max(size.y, 0.001);
   avatar.scale.setScalar(scale);
   avatar.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
@@ -278,8 +279,8 @@ function clearTextures() {
 
 function resetView() {
   controls.reset();
-  camera.position.set(0, 1.65, 5.2);
-  controls.target.set(0, 1.45, 0);
+  camera.position.set(0, 1.35, 6.15);
+  controls.target.set(0, 1.22, 0);
   controls.update();
 }
 
