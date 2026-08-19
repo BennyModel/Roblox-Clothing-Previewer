@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 const viewer = document.querySelector("#viewer");
@@ -16,6 +15,9 @@ let camera;
 let renderer;
 let controls;
 let avatar;
+let shirtMeshes = [];
+let pantsMeshes = [];
+let neutralMeshes = [];
 let shirtTexture = null;
 let pantsTexture = null;
 let shirtObjectUrl = null;
@@ -73,56 +75,54 @@ function createScene() {
   floor.position.y = -0.08;
   scene.add(floor);
 
-  loadAvatar();
+  createAvatar();
   animate();
 }
 
-function loadAvatar() {
-  const loader = new GLTFLoader();
-  loader.load(
-    "assets/models/roblox_model_blocky.glb",
-    (gltf) => {
-      avatar = gltf.scene;
-      normalizeAvatar(avatar);
-      scene.add(avatar);
-      applyTextures();
-      setStatus("", true);
-    },
-    undefined,
-    (error) => {
-      console.error(error);
-      setStatus("Could not load model");
-    }
-  );
+function createAvatar() {
+  avatar = new THREE.Group();
+  avatar.name = "code-built-r6-blocky-avatar";
+  shirtMeshes = [];
+  pantsMeshes = [];
+  neutralMeshes = [];
+
+  const skin = createMaterial(0xe8e5d7);
+  const shirt = createMaterial(0xf0ead6);
+  const pants = createMaterial(0x8f9f84);
+
+  addPart("Head", [0.86, 0.64, 0.86], [0, 2.72, 0], skin, neutralMeshes);
+  addPart("Torso", [1.52, 1.42, 0.68], [0, 1.78, 0], shirt, shirtMeshes);
+  addPart("Left Arm", [0.46, 1.42, 0.62], [-1.02, 1.78, 0], shirt, shirtMeshes);
+  addPart("Right Arm", [0.46, 1.42, 0.62], [1.02, 1.78, 0], shirt, shirtMeshes);
+  addPart("Left Leg", [0.58, 1.2, 0.62], [-0.36, 0.48, 0], pants, pantsMeshes);
+  addPart("Right Leg", [0.58, 1.2, 0.62], [0.36, 0.48, 0], pants, pantsMeshes);
+
+  avatar.scale.setScalar(0.86);
+  avatar.position.y = 0.12;
+  scene.add(avatar);
+  setStatus("", true);
 }
 
-function normalizeAvatar(model) {
-  const box = new THREE.Box3().setFromObject(model);
-  const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3());
-  const scale = 2.65 / Math.max(size.x, size.y, size.z);
-
-  model.scale.setScalar(scale);
-  model.position.sub(center.multiplyScalar(scale));
-  model.position.y += 1.0;
-
-  model.traverse((child) => {
-    if (!child.isMesh) return;
-
-    child.frustumCulled = false;
-    child.renderOrder = child.name.toLowerCase().includes("bot") ? 1 : 2;
-
-    const oldMaterial = Array.isArray(child.material) ? child.material[0] : child.material;
-    child.material = new THREE.MeshStandardMaterial({
-      color: oldMaterial?.color || new THREE.Color(0xffffff),
-      map: oldMaterial?.map || null,
-      roughness: 0.68,
-      metalness: 0,
-      transparent: true,
-      alphaTest: 0.01,
-      side: THREE.FrontSide,
-    });
+function createMaterial(color) {
+  return new THREE.MeshStandardMaterial({
+    color,
+    roughness: 0.72,
+    metalness: 0,
+    transparent: true,
+    alphaTest: 0.01,
+    side: THREE.FrontSide,
   });
+}
+
+function addPart(name, size, position, material, bucket) {
+  const geometry = new THREE.BoxGeometry(size[0], size[1], size[2]);
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.name = name;
+  mesh.position.set(position[0], position[1], position[2]);
+  mesh.castShadow = false;
+  mesh.receiveShadow = false;
+  avatar.add(mesh);
+  bucket.push(mesh);
 }
 
 function disposeTexture(texture) {
@@ -175,33 +175,15 @@ function loadTexture(file, type) {
 function applyTextures() {
   if (!avatar) return;
 
-  avatar.traverse((child) => {
-    if (!child.isMesh || !child.material) return;
+  shirtMeshes.forEach((mesh) => setMeshTexture(mesh, shirtTexture, 0xf0ead6));
+  pantsMeshes.forEach((mesh) => setMeshTexture(mesh, pantsTexture, 0x8f9f84));
+  neutralMeshes.forEach((mesh) => setMeshTexture(mesh, null, 0xe8e5d7));
+}
 
-    const name = child.name.toLowerCase();
-    const materialName = child.material.name?.toLowerCase() || "";
-    const isBottom = name.includes("bot") || materialName.includes("leg");
-    const isTop = name.includes("top") || materialName.includes("torso");
-    const isGhost = name.includes("ghost");
-
-    if (isGhost) {
-      child.material.color.set(0xe8e5d7);
-      child.material.map = null;
-      child.material.transparent = false;
-      child.material.opacity = 1;
-    } else if (isBottom && pantsTexture) {
-      child.material.map = pantsTexture;
-      child.material.color.set(0xffffff);
-    } else if (isTop && shirtTexture) {
-      child.material.map = shirtTexture;
-      child.material.color.set(0xffffff);
-    } else {
-      child.material.map = null;
-      child.material.color.set(isBottom ? 0x8f9f84 : 0xf0ead6);
-    }
-
-    child.material.needsUpdate = true;
-  });
+function setMeshTexture(mesh, texture, fallbackColor) {
+  mesh.material.map = texture || null;
+  mesh.material.color.set(texture ? 0xffffff : fallbackColor);
+  mesh.material.needsUpdate = true;
 }
 
 function clearTextures() {
